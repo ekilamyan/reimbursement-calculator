@@ -1,1 +1,36 @@
-/* You can add global styles to this file, and also import other style files */
+@import 'primeicons/primeicons.css';
+
+:root {
+  --app-bg: #f4f7f7;
+  --app-surface: #ffffff;
+  --app-border: #d9e2e2;
+  --app-text: #1f2a2a;
+  --app-muted: #4a5858;
+  --app-highlight: #eef7f6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--app-bg);
+  color: var(--app-text);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+.method-tooltip.p-tooltip {
+  max-width: 28rem;
+
+  .tip p {
+    margin: 0 0 0.5rem;
+    line-height: 1.4;
+    font-size: 0.85rem;
+  }
+
+  .tip p:last-child {
+    margin-bottom: 0;
+  }
+}

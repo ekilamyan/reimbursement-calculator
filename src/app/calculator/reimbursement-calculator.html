@@ -1,0 +1,330 @@
+<section class="calculator" aria-labelledby="calc-title">
+  <header class="calc-header">
+    <h1 id="calc-title">Reimbursement Calculator</h1>
+    <div class="header-actions">
+      <p-button
+        label="Clear"
+        severity="danger"
+        [outlined]="true"
+        [rounded]="true"
+        (onClick)="clear()"
+        data-testid="clear"
+      />
+      <p-button label="Preset" [outlined]="true" [rounded]="true" (onClick)="preset()" data-testid="preset" />
+    </div>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="calculate()" novalidate>
+    <div class="grid">
+      <!-- Row 1 -->
+      <div class="field">
+        <label for="deductible">Deductible $</label>
+        <p-inputnumber
+          inputId="deductible"
+          formControlName="deductible"
+          mode="currency"
+          currency="USD"
+          locale="en-US"
+          [min]="0"
+          [invalid]="showError(form.controls.deductible)"
+          fluid
+          data-testid="deductible"
+        />
+        @if (showError(form.controls.deductible)) {
+          <small class="error">Deductible is required.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="deductibleMet">Deductible Met $</label>
+        <p-inputnumber
+          inputId="deductibleMet"
+          formControlName="deductibleMet"
+          mode="currency"
+          currency="USD"
+          locale="en-US"
+          [min]="0"
+          fluid
+          data-testid="deductibleMet"
+        />
+      </div>
+
+      <div class="field">
+        <label for="providerPct">Co-Insurance % After Deductible to Provider</label>
+        <p-inputnumber
+          inputId="providerPct"
+          formControlName="providerPct"
+          suffix="%"
+          [min]="0"
+          [max]="100"
+          [maxFractionDigits]="2"
+          [invalid]="showError(form.controls.providerPct)"
+          fluid
+          data-testid="providerPct"
+        />
+      </div>
+
+      <!-- Row 2 -->
+      <div class="field">
+        <div class="label-row">
+          <label for="maxOop">Max OOP $</label>
+          <span class="unlimited">
+            <label for="oopUnlimited">Unlimited</label>
+            <p-toggleswitch inputId="oopUnlimited" formControlName="oopUnlimited" data-testid="oopUnlimited" />
+          </span>
+        </div>
+        <p-inputnumber
+          inputId="maxOop"
+          formControlName="maxOop"
+          mode="currency"
+          currency="USD"
+          locale="en-US"
+          [min]="0"
+          [placeholder]="form.controls.oopUnlimited.value ? 'Unlimited' : ''"
+          [invalid]="showError(form.controls.maxOop)"
+          fluid
+          data-testid="maxOop"
+        />
+        @if (showError(form.controls.maxOop)) {
+          <small class="error">Max OOP is required (or set it to Unlimited).</small>
+        }
+      </div>
+
+      <div class="field">
+        <div class="label-row">
+          <label for="maxOopMet">Max OOP Met $</label>
+          <span class="unlimited">
+            <label for="oopMetUnlimited">Unlimited</label>
+            <p-toggleswitch
+              inputId="oopMetUnlimited"
+              formControlName="oopUnlimited"
+              data-testid="oopMetUnlimited"
+            />
+          </span>
+        </div>
+        <p-inputnumber
+          inputId="maxOopMet"
+          formControlName="maxOopMet"
+          mode="currency"
+          currency="USD"
+          locale="en-US"
+          [min]="0"
+          [placeholder]="form.controls.oopUnlimited.value ? 'Unlimited' : ''"
+          fluid
+          data-testid="maxOopMet"
+        />
+      </div>
+
+      <div class="field">
+        <label for="patientPct">Co-Insurance % After Deductible to Patient</label>
+        <p-inputnumber
+          inputId="patientPct"
+          formControlName="patientPct"
+          suffix="%"
+          [min]="0"
+          [max]="100"
+          [maxFractionDigits]="2"
+          [invalid]="showError(form.controls.patientPct)"
+          fluid
+          data-testid="patientPct"
+        />
+      </div>
+    </div>
+
+    @if (form.hasError('coInsuranceSum')) {
+      <p-message severity="error" size="small" variant="simple" styleClass="form-msg">
+        Co-insurance to Provider and to Patient must add up to 100%.
+      </p-message>
+    }
+
+    <div class="grid two">
+      <div class="field">
+        <label for="afterOopPct">Payment After OOP is Met</label>
+        <p-inputnumber
+          inputId="afterOopPct"
+          formControlName="afterOopPct"
+          suffix="%"
+          [min]="0"
+          [max]="100"
+          [maxFractionDigits]="2"
+          [invalid]="showError(form.controls.afterOopPct)"
+          fluid
+          data-testid="afterOopPct"
+        />
+      </div>
+
+      <div class="field">
+        <label for="deductibleIncludedInOop">Is Deductible Included in OOP?</label>
+        <p-select
+          inputId="deductibleIncludedInOop"
+          formControlName="deductibleIncludedInOop"
+          [options]="yesNoOptions"
+          optionLabel="label"
+          optionValue="value"
+          fluid
+          data-testid="deductibleIncludedInOop"
+        />
+      </div>
+    </div>
+
+    <div class="field method">
+      <div class="label-row start">
+        <span id="method-label">Day the OOP is met</span>
+        <button
+          type="button"
+          class="info-btn"
+          aria-label="How the two methods work"
+          [pTooltip]="methodTip"
+          tooltipPosition="top"
+          tooltipEvent="both"
+          tooltipStyleClass="method-tooltip"
+          data-testid="method-info"
+        >
+          <i class="pi pi-info-circle" aria-hidden="true"></i>
+        </button>
+        <ng-template #methodTip>
+          <div class="tip">
+            <p>
+              Controls how the facility is paid on the one day the patient's OOP gets met part-way
+              through. Every other day is the same under both methods.
+            </p>
+            <p><strong>Method A (original):</strong> {{ methodHelp.A }}</p>
+            <p><strong>Method B (proportional):</strong> {{ methodHelp.B }}</p>
+            <p>Both give the same result when "Payment After OOP is Met" is 100%.</p>
+          </div>
+        </ng-template>
+      </div>
+      <p-selectbutton
+        formControlName="crossingMethod"
+        [options]="methodOptions"
+        optionLabel="label"
+        optionValue="value"
+        [allowEmpty]="false"
+        ariaLabelledBy="method-label"
+        data-testid="crossingMethod"
+      />
+    </div>
+
+    <!-- Levels of care -->
+    <div class="locs" formArrayName="levelsOfCare">
+      @for (loc of locs.controls; track loc; let i = $index) {
+        <div class="loc-row" [formGroupName]="i" [attr.data-testid]="'loc-row-' + i">
+          <p-button
+            icon="pi pi-trash"
+            severity="danger"
+            [text]="true"
+            [ariaLabel]="'Remove level of care ' + (i + 1)"
+            (onClick)="removeLoc(i)"
+            [attr.data-testid]="'loc-remove-' + i"
+          />
+          <div class="field">
+            <label [for]="'loc-name-' + i">Level of Care</label>
+            <p-select
+              [inputId]="'loc-name-' + i"
+              formControlName="name"
+              [options]="locOptions"
+              placeholder="Select LOC"
+              [invalid]="showError(loc.controls.name)"
+              fluid
+              [attr.data-testid]="'loc-name-' + i"
+            />
+          </div>
+          <div class="field">
+            <label [for]="'loc-rate-' + i">Rate</label>
+            <p-inputnumber
+              [inputId]="'loc-rate-' + i"
+              formControlName="rate"
+              mode="currency"
+              currency="USD"
+              locale="en-US"
+              [min]="0"
+              [invalid]="showError(loc.controls.rate)"
+              fluid
+              [attr.data-testid]="'loc-rate-' + i"
+            />
+          </div>
+          <div class="field days">
+            <label [for]="'loc-days-' + i"># Of Days</label>
+            <p-inputnumber
+              [inputId]="'loc-days-' + i"
+              formControlName="days"
+              [min]="1"
+              [useGrouping]="false"
+              [invalid]="showError(loc.controls.days)"
+              fluid
+              [attr.data-testid]="'loc-days-' + i"
+            />
+          </div>
+        </div>
+      } @empty {
+        <p class="empty">Add at least one level of care to calculate.</p>
+      }
+    </div>
+
+    <div class="actions">
+      <p-button
+        label="LOC"
+        icon="pi pi-plus"
+        [outlined]="true"
+        [rounded]="true"
+        (onClick)="addLoc()"
+        data-testid="add-loc"
+      />
+      <p-button type="submit" label="Calculate" [rounded]="true" data-testid="calculate" />
+    </div>
+  </form>
+
+  @if (result(); as r) {
+    <section class="results" aria-labelledby="results-title" data-testid="results">
+      <div class="results-header">
+        <h2 id="results-title">Results</h2>
+        @if (stale()) {
+          <p-message severity="warn" size="small" data-testid="stale">
+            Inputs changed — click Calculate to refresh.
+          </p-message>
+        }
+      </div>
+
+      <p-table [value]="r.days" [tableStyle]="{ 'min-width': '44rem' }" styleClass="results-table">
+        <ng-template #header>
+          <tr>
+            <th scope="col">Day #</th>
+            <th scope="col">Remaining Deductible</th>
+            <th scope="col">Remaining OOP</th>
+            <th scope="col">Rate</th>
+            <th scope="col">LOC</th>
+            <th scope="col" class="num">Patient Resp.</th>
+            <th scope="col" class="num">Payment</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-d>
+          <tr [class.met]="d.events.length > 0" [attr.data-testid]="'day-' + d.day">
+            <td>
+              {{ d.day }}
+              @for (e of d.events; track e) {
+                <span class="tag" [class.oop]="e === 'oop-met'">
+                  {{ e === 'oop-met' ? 'OOP met' : 'Deductible met' }}
+                </span>
+              }
+            </td>
+            <td>{{ d.remainingDeductible | currency: 'USD' }}</td>
+            <td>{{ d.remainingOop === null ? 'Unlimited' : (d.remainingOop | currency: 'USD') }}</td>
+            <td>{{ d.rate | currency: 'USD' }}</td>
+            <td>{{ d.loc }}</td>
+            <td class="num">{{ d.patientResponsibility | currency: 'USD' }}</td>
+            <td class="num" data-testid="day-payment">{{ d.payment | currency: 'USD' }}</td>
+          </tr>
+        </ng-template>
+        <ng-template #footer>
+          <tr>
+            <td colspan="3"><strong>Total</strong></td>
+            <td>{{ r.totalBilled | currency: 'USD' }}</td>
+            <td></td>
+            <td class="num">{{ r.totalPatientResponsibility | currency: 'USD' }}</td>
+            <td class="num"><strong data-testid="total">{{ r.totalPayment | currency: 'USD' }}</strong></td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </section>
+  }
+</section>
